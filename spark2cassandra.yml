@@ -1,0 +1,17 @@
+version: '2'
+services:
+  zookeeper:
+    image: daocloud.io/adolphlwq/docker-zookeeper:master-81e69c8
+    network_mode: "host"
+    container_name: zookeeper
+
+  cassandra:
+    image: cassandra:latest
+    network_mode: "host"
+    container_name: cassandra
+
+  kafka:
+    image: daocloud.io/adolphlwq/docker-kafka:master-da3fe67
+    network_mode: "host"
+    container_name: kafka
+    command: ./bin/kafka-server-start.sh config/server.properties
