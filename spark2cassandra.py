@@ -5,13 +5,19 @@
     2. convert the info to needed format
     3. store info to cassandra
     4. use Spark Streaming1.6.0 Python API and kafka-python1.2.2 library
+
     ## usage
     ### srtart linkerConnector
     linkerConnector -i 5000 -d kafka -t topic-spark2cassandra -s localhost:9092
+
     ### submit py files
     ./bin/spark-submit --packages org.apache.spark:spark-streaming-kafka_2.10:1.6.1  \
     /publicdata/workspace/PycharmProjects/spark2cassandra/spark2cassandra.py \
     localhost:2181 topic-spark2cassandra
+
+    ### error
+    "blockmanager block input replicated to only 0 peer(s) instead of 1 peers"
+    http://stackoverflow.com/questions/32583273/spark-streaming-get-warn-replicated-to-only-0-peers-instead-of-1-peers
 """
 
 from __future__ import print_function
@@ -38,13 +44,14 @@ if __name__ == "__main__":
         print("Usage: spark2cassandra.py <zk> <topic>", file=sys.stderr)
         exit(-1)
 
-    sc = SparkContext('local[2]', 'spark2cassandra')
+    sc = SparkContext('local[4]', 'spark2cassandra')
     ssc = StreamingContext(sc, 5)
 
     zkQuorum, topic = sys.argv[1:]
-    kafkaStream = KafkaUtils.createStream(ssc, zkQuorum, 'group-spark2cassandra', {topic: 1})
-    machineInfo = kafkaStream.filter()
-    kafkaStream.pprint()
+    processStream = KafkaUtils.createStream(ssc, zkQuorum, 'group-spark2cassandra', {topic: 1}, {'key': 'ProcessInfo'})
+    machineStream = KafkaUtils.createStream(ssc, zkQuorum, 'group-spark2cassandra', {topic: 1}, {'key': 'MachineInfo'})
+    machineStream.pprint()
+    # processStream.pprint()
     ssc.start()
     ssc.awaitTermination()
 
