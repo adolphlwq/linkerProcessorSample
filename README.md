@@ -1,4 +1,6 @@
 # linkerProcessorSample Intro
+[![Build Status](https://travis-ci.org/adolphlwq/linkerProcessorSample.svg?branch=master)](https://travis-ci.org/adolphlwq/linkerProcessorSample)
+
 A sample code for processing infomation from Kafka and store to Cassandra using Apache Spark
 
 ## Usage
