@@ -1,19 +1,24 @@
 # linkerProcessorSample Intro
-A sample code for processing info from kafka and store to cassandra using Apache Spark
+A sample code for processing infomation from Kafka and store to Cassandra using Apache Spark
 
 ## Usage
 ### prerequisite
-First, you should set up zookeeper, cassandra and kafka broker
+First, you should set up zookeeper, cassandra and kafka broker. Then create kafka topic and cassandra keyspace
 
 Second:
 
 1. download [Apache Spark](spark.apache.org)
-2. git clone https://github.com/adolphlwq/linkerProcessorSample.git
-3. submit python code to spark(local mode):
+2. run [linkerConnector](https://github.com/LinkerNetworks/linkerConnector)
+    - git clone https://github.com/LinkerNetworks/linkerConnector.git
+    - install [Golang](https://golang.org/)
+    - cd path/to/linkerConnector
+    - `go build` and `go install`
+3. git clone linkerProcessSample(https://github.com/adolphlwq/linkerProcessorSample.git)
+3. submit python code to spark(**local mode**):
 ```
 path/to/spark/bin/spark-submit \
     --packages org.apache.spark:spark-streaming-kafka_2.10:1.6.1  \
-    spark2cassandra.py kafka_broker_servers kafka_topic
+    path/to/linkerProcessorSample/spark2cassandra.py kafka_broker_servers kafka_topic
 ```
 
 ## TODOs
