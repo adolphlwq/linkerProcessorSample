@@ -36,6 +36,6 @@ path/to/spark/bin/spark-submit \
 - [X] save machine info to cassandra
 - [X] save kafka message to cassandra directly
 - [ ] overall cpu usage from linkerConnector (via Kafka)
-- [ ] mesos agent usage from linkerConnector (via Kafka)
     - [X] calculate cpu usage and save to cassandra
     - [ ] research spark streaming's "window" and improve code
+- [ ] mesos agent usage from linkerConnector (via Kafka)
