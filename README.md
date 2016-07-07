@@ -4,7 +4,7 @@
 A sample code for processing infomation from Kafka and store to Cassandra using Apache Spark
 
 ## Usage
-### prerequisite
+### Prerequisite
 First, you should set up zookeeper, cassandra and kafka broker. Then create kafka topic and cassandra keyspace
 
 Second:
@@ -26,11 +26,16 @@ path/to/spark/bin/spark-submit \
 ## Note:
 1. interval of spark streaming **>** interval of linkerConnector
 
+## Reference
+- [calculate cpu usage in Golang](https://sourcegraph.com/github.com/statsd/system/-/def/GoPackage/github.com/statsd/system/pkg/cpu/-/totals)
+- [Linux Kernel about proc](http://www.mjmwired.net/kernel/Documentation/filesystems/proc.txt#1271)
+
 ## TODOs
 - [X] collect info from kafka
 - [X] save processes info to cassandra
 - [X] save machine info to cassandra
 - [X] save kafka message to cassandra directly
-- [] overall cpu usage from linkerConnector (via Kafka)
-- [X] mesos agent usage from linkerConnector (via Kafka)
-    - [] improve usage function
+- [ ] overall cpu usage from linkerConnector (via Kafka)
+- [ ] mesos agent usage from linkerConnector (via Kafka)
+    - [X] calculate cpu usage and save to cassandra
+    - [ ] research spark streaming's "window" and improve code
