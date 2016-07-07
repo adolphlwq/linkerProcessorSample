@@ -23,8 +23,14 @@ path/to/spark/bin/spark-submit \
     path/to/linkerProcessorSample/spark2cassandra.py kafka_broker_servers kafka_topic
 ```
 
+## Note:
+1. interval of spark streaming **>** interval of linkerConnector
+
 ## TODOs
 - [X] collect info from kafka
 - [X] save processes info to cassandra
 - [X] save machine info to cassandra
 - [X] save kafka message to cassandra directly
+- [] overall cpu usage from linkerConnector (via Kafka)
+- [X] mesos agent usage from linkerConnector (via Kafka)
+    - [] improve usage function

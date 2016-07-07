@@ -24,6 +24,7 @@
 
 from __future__ import print_function
 import sys
+import logging
 import ConfigParser
 import json
 import time
@@ -53,8 +54,6 @@ class cassandraUtil(object):
         self.keyspace = 'iotinfo_tmp'
         self.cluster = Cluster(contact_points=self.ip, port=self.port)
         self.session = self.cluster.connect(self.keyspace)
-    def set_new_keyspace(self, new_keyspace):
-        self.session.set_keyspace(new_keyspace)
     def close_session(self):
         self.session.shutdown()
     def save_machineinfo_json(self, t, machineinfo):
@@ -71,10 +70,40 @@ class cassandraUtil(object):
             now = time.time()
             q = self.session.prepare('INSERT INTO processinfo(timestamp, content) values (?, ?)')
             self.session.execute(q, (int(now), info))
+    def save_cpu_usage(self, data):
+        '''
+        :param data:list of cpu usage
+        :return:
+        '''
+        ret_data = cal_cpu_usage(data)
+        q = self.session.prepare("INSERT INTO etldata(timestamp, cpu_usage) values (?, ?)")
+        for ret in ret_data:
+            self.session.execute(q, (ret[0], ret[1]))
+            print('insert info {0}'.format(ret))
 
-def testRdd(rdd):
-    for i in rdd.collect():
-        print(i)
+def cal_cpu_usage(l):
+    '''
+    :param l: [(1467875650, (238304124, 249094134)),(1467875650, (238304208, 249094388)),(1467875651, (238304429, 249094620))]
+    :return:
+    '''
+    usage = []
+    for i in range(len(l)-1):
+        c0 = l[i]
+        c1 = l[i+1]
+        ret = (c1[1][0]-c0[1][0])/float(c1[1][1]-c0[1][1]) * 100
+        usage.append((c0[0],ret))
+    return usage
+
+
+def format_cpu_stat(p):
+    if p is None or p == '':
+        return
+    return (p['timestamp'], total(p['cpu_all']))
+
+
+def total(c):
+    del c['id']
+    return c['idle']+c['iowait'],sum(c.values())
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
@@ -88,10 +117,11 @@ if __name__ == "__main__":
     zkQuorum, topic = sys.argv[1:]
     kafkaStream = KafkaUtils.createStream(ssc, zkQuorum, 'group-spark2cassandra', {topic: 1})
     machineStream = kafkaStream.filter(lambda line: 'MachineInfo' in line).map(lambda line: line[1])
+    # compute cpu overall usage
     processStream = kafkaStream.filter(lambda line: 'ProcessInfo' in line).map(lambda line: line[1])
-    machineStream.foreachRDD(lambda t, rdd: cassandraUtil.save_machineinfo_json(t, rdd.collect()))
-    processStream.foreachRDD(lambda t, rdd: cassandraUtil.save_processinfo_json(t, rdd.collect()))
-    # machineStream.pprint()
+    formatUsageStream = processStream\
+                    .map(lambda info: format_cpu_stat(json.loads(info.decode('utf-8'))))
+    formatUsageStream.foreachRDD(lambda t, rdd: cassandraUtil.save_cpu_usage(rdd.collect()))
     ssc.start()
     ssc.awaitTermination()
     cassandraUtil.close_session()
