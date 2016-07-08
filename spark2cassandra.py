@@ -72,38 +72,56 @@ class cassandraUtil(object):
             self.session.execute(q, (int(now), info))
     def save_cpu_usage(self, data):
         '''
-        :param data:list of cpu usage
+        :param data:list of cpu usage:[{},{},...,{}]
         :return:
         '''
+        if len(data) == 0:
+            print('no data from spark streaming')
+            return
         ret_data = cal_cpu_usage(data)
-        q = self.session.prepare("INSERT INTO etldata(timestamp, cpu_usage) values (?, ?)")
+        q = self.session.prepare("INSERT INTO etldata(timestamp, cpu_all, cpus) values (?, ?, ?)")
         for ret in ret_data:
-            self.session.execute(q, (ret[0], ret[1]))
+            self.session.execute(q, (ret['timestamp'], ret['cpu_all'], json.dumps(ret['cpus'])))
             print('insert info {0}'.format(ret))
 
 def cal_cpu_usage(l):
     '''
-    :param l: [(1467875650, (238304124, 249094134)),(1467875650, (238304208, 249094388)),(1467875651, (238304429, 249094620))]
+    :param l: [{'timestamp':timestamp, 'cpus':[{idle, total, id},...]},{},...,{}], 'cpu_all':{idle, total}},...,{}]
     :return:
     '''
+    if len(l) < 2:
+        return
     usage = []
+    core_nums = len(l[0]['cpus'])
     for i in range(len(l)-1):
-        c0 = l[i]
-        c1 = l[i+1]
-        ret = (c1[1][0]-c0[1][0])/float(c1[1][1]-c0[1][1]) * 100
-        usage.append((c0[0],ret))
+        each_ret = []
+        c0 = l[i]['cpus']
+        c1 = l[i+1]['cpus']
+        cpu_all_usage = (l[i+1]['cpu_all']['idle']-l[i]['cpu_all']['idle'])/float(l[i+1]['cpu_all']['total']-l[i]['cpu_all']['total'])*100
+        for j in range(core_nums):
+            ret = (c1[j]['idle']-c0[j]['idle'])/float(c1[j]['total']-c0[j]['total'])*100
+            each_ret.append({'id':c0[j]['id'], 'usage':ret})
+        usage.append({'timestamp':l[i]['timestamp'], 'cpu_all':cpu_all_usage, 'cpus':each_ret})
     return usage
-
 
 def format_cpu_stat(p):
     if p is None or p == '':
         return
-    return (p['timestamp'], total(p['cpu_all']))
-
-
-def total(c):
-    del c['id']
-    return c['idle']+c['iowait'],sum(c.values())
+    #calc tot cpu usage
+    cpu_all = p['stat']['cpu_all']
+    tot_idle = cpu_all['idle'] + cpu_all['iowait']
+    del cpu_all['id']
+    tot_tot = sum(cpu_all.values())
+    ret = []
+    cpus = p['stat']['cpus']
+    core_nums = len(cpus)
+    # calc each cpu's idle and total
+    for cpu in cpus:
+        id = cpu['id']
+        del cpu['id']
+        tmp = {'id': id, 'idle': cpu['idle'] + cpu['iowait'], 'total': sum(cpu.values())}
+        ret.append(tmp)
+    return {'timestamp':p['timestamp'], 'cpu_all':{'idle':tot_idle, 'total': tot_tot}, 'cpus':ret}
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
@@ -121,6 +139,7 @@ if __name__ == "__main__":
     processStream = kafkaStream.filter(lambda line: 'ProcessInfo' in line).map(lambda line: line[1])
     formatUsageStream = processStream\
                     .map(lambda info: format_cpu_stat(json.loads(info.decode('utf-8'))))
+    # formatUsageStream.pprint()
     formatUsageStream.foreachRDD(lambda t, rdd: cassandraUtil.save_cpu_usage(rdd.collect()))
     ssc.start()
     ssc.awaitTermination()

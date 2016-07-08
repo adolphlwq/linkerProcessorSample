@@ -29,13 +29,16 @@ path/to/spark/bin/spark-submit \
 ## Reference
 - [calculate cpu usage in Golang](https://sourcegraph.com/github.com/statsd/system/-/def/GoPackage/github.com/statsd/system/pkg/cpu/-/totals)
 - [Linux Kernel about proc](http://www.mjmwired.net/kernel/Documentation/filesystems/proc.txt#1271)
+- [Cassandra tutorial](http://www.tutorialspoint.com/cassandra/cassandra_alter_table.htm)
+- [Cassandra data types](https://docs.datastax.com/en/cql/3.0/cql/cql_reference/cql_data_types_c.html)
+- [Cassandra user user-defined-type](https://docs.datastax.com/en/cql/3.1/cql/cql_using/cqlUseUDT.html)
 
 ## TODOs
 - [X] collect info from kafka
 - [X] save processes info to cassandra
 - [X] save machine info to cassandra
 - [X] save kafka message to cassandra directly
-- [ ] overall cpu usage from linkerConnector (via Kafka)
+- [X] overall cpu usage from linkerConnector (via Kafka)
     - [X] calculate cpu usage and save to cassandra
-    - [ ] research spark streaming's "window" and improve code
+- [ ] research spark streaming's "window" and improve code
 - [ ] mesos agent usage from linkerConnector (via Kafka)
