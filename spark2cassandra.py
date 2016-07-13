@@ -15,6 +15,11 @@
     /publicdata/workspace/PycharmProjects/spark2cassandra/spark2cassandra.py \
     localhost:2181 topic-spark2cassandra
 
+    ### submit on docs by dcos-spark cli
+    dcos spark run --submit-args='--packages org.apache.spark:spark-streaming-kafka_2.10:1.6.0 \
+        spark2cassandra.py 10.140.0.14:2181 wlu_spark2cassandra' \
+        --docker-image=adolphlwq/mesos-for-spark-exector-image:1.6.0.beta
+
     ### error
     "blockmanager block input replicated to only 0 peer(s) instead of 1 peers"
     or "16/07/04 13:51:05 WARN BlockManager: Block input-0-1467611464800 \

@@ -33,6 +33,9 @@ path/to/spark/bin/spark-submit \
 - [Cassandra data types](https://docs.datastax.com/en/cql/3.0/cql/cql_reference/cql_data_types_c.html)
 - [Cassandra user user-defined-type](https://docs.datastax.com/en/cql/3.1/cql/cql_using/cqlUseUDT.html)
 
+## Docker image
+This image is for Spark exector on Mesos
+
 ## TODOs
 - [X] collect info from kafka
 - [X] save processes info to cassandra
