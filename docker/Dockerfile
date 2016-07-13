@@ -13,7 +13,7 @@ RUN echo "deb http://repos.mesosphere.io/ubuntu/ trusty main" > /etc/apt/sources
 RUN git clone https://github.com/adolphlwq/linkerProcessorSample.git && \
     pip install -r linkerProcessorSample/docker/requirements.txt
 
-RUN curl -fL http://ftp.mirror.tw/pub/apache/spark/spark-1.6.1/spark-1.6.1-bin-hadoop2.6.tgz | tar xzf - C /usr/local && \
+RUN curl -fL http://archive.apache.org/dist/spark/spark-1.6.0/spark-1.6.0-bin-hadoop2.6.tgz | tar xzf - C /usr/local && \
     apt-get clean
 
 ENV MESOS_NATIVE_JAVA_LIBRARY=/usr/lib/libmesos.so \
