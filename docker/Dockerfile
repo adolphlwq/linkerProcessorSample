@@ -11,7 +11,7 @@ RUN echo "deb http://repos.mesosphere.io/ubuntu/ trusty main" > /etc/apt/sources
     apt-get -y install mesos=0.28.1-2.0.20.ubuntu1404 openjdk-7-jre python-pip git vim curl
 
 RUN git clone https://github.com/adolphlwq/linkerProcessorSample.git && \
-    pip install linkerProcessorSample/docker/requirements.txt
+    pip install -r linkerProcessorSample/docker/requirements.txt
 
 RUN curl -fL http://ftp.mirror.tw/pub/apache/spark/spark-1.6.1/spark-1.6.1-bin-hadoop2.6.tgz | tar xzf - C /usr/local && \
     apt-get clean
