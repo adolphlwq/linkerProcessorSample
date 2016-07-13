@@ -42,3 +42,4 @@ path/to/spark/bin/spark-submit \
     - [X] calculate cpu usage and save to cassandra
 - [ ] research spark streaming's "window" and improve code
 - [ ] mesos agent usage from linkerConnector (via Kafka)
+- [ ] build spark docker image for testing code on [Spark on Mesos mode](http://spark.apache.org/docs/latest/running-on-mesos.html) using [linkerDCOS](http://linkernetworks.com/) or [DC/OS](https://dcos.io/)
