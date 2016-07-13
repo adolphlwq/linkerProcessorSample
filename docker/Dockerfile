@@ -19,7 +19,8 @@ RUN curl -fL http://archive.apache.org/dist/spark/spark-1.6.0/spark-1.6.0-bin-ha
 
 # download dependencies
 RUN mkdir -p /linker/jars && \
-    wget http://central.maven.org/maven2/org/apache/spark/spark-streaming-kafka_2.10/1.6.0/spark-streaming-kafka_2.10-1.6.0.jar
+    cd /linker/jars && \
+    curl -O http://central.maven.org/maven2/org/apache/spark/spark-streaming-kafka_2.10/1.6.0/spark-streaming-kafka_2.10-1.6.0.jar
 
 ENV MESOS_NATIVE_JAVA_LIBRARY=/usr/lib/libmesos.so \
     JAVA_HOME=/usr/lib/jvm/java-7-openjdk-amd64 \
