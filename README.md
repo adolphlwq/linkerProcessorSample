@@ -26,15 +26,21 @@ path/to/spark/bin/spark-submit \
 ## Note:
 1. interval of spark streaming **>** interval of linkerConnector
 
+## Docker image
+1. This [image Dcokerfile](https://github.com/adolphlwq/linkerProcessorSample/blob/master/docker/Dockerfile) is for running Spark exector on Mesos cluster.
+2. If your code is written in Python and your Spark run on mesos, you must solve the java dependencies.
+3. I scan [Advanced Dependency Management](http://spark.apache.org/docs/latest/submitting-applications.html#advanced-dependency-management) section and try build the dependencies on mesos spark exector docker image.
+
+## Note:
+1. interval of spark streaming **>** interval of linkerConnectorhe Maven central repo is https://mvnrepository.com/artifact/org.apache.spark/spark-streaming-kafka_2.10/1.6.0
+
+
 ## Reference
 - [calculate cpu usage in Golang](https://sourcegraph.com/github.com/statsd/system/-/def/GoPackage/github.com/statsd/system/pkg/cpu/-/totals)
 - [Linux Kernel about proc](http://www.mjmwired.net/kernel/Documentation/filesystems/proc.txt#1271)
 - [Cassandra tutorial](http://www.tutorialspoint.com/cassandra/cassandra_alter_table.htm)
 - [Cassandra data types](https://docs.datastax.com/en/cql/3.0/cql/cql_reference/cql_data_types_c.html)
 - [Cassandra user user-defined-type](https://docs.datastax.com/en/cql/3.1/cql/cql_using/cqlUseUDT.html)
-
-## Docker image
-This image is for Spark exector on Mesos
 
 ## TODOs
 - [X] collect info from kafka
@@ -45,4 +51,4 @@ This image is for Spark exector on Mesos
     - [X] calculate cpu usage and save to cassandra
 - [ ] research spark streaming's "window" and improve code
 - [ ] mesos agent usage from linkerConnector (via Kafka)
-- [ ] build spark docker image for testing code on [Spark on Mesos mode](http://spark.apache.org/docs/latest/running-on-mesos.html) using [linkerDCOS](http://linkernetworks.com/) or [DC/OS](https://dcos.io/)
+- [] build spark docker image for testing code on [Spark on Mesos mode](http://spark.apache.org/docs/latest/running-on-mesos.html) using [linkerDCOS](http://linkernetworks.com/) or [DC/OS](https://dcos.io/)
