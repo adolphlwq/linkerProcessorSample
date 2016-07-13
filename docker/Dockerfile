@@ -20,3 +20,4 @@ ENV MESOS_NATIVE_JAVA_LIBRARY=/usr/lib/libmesos.so \
     JAVA_HOME=/usr/lib/jvm/java-7-openjdk-amd64 \
     SPARK_HOME=/usr/local/spark-1.6.0-bin-hadoop2.6
 ENV PATH=$JAVA_HOME/bin:$PATH
+WORKDIR $SPARK_HOME
