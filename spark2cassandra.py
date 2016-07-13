@@ -30,6 +30,7 @@ import json
 import time
 
 from pyspark import SparkContext
+from pyspark import SparkConf
 from pyspark.streaming import StreamingContext
 from pyspark.streaming.kafka import KafkaUtils
 
@@ -49,7 +50,7 @@ from cassandra.cluster import Cluster
 class cassandraUtil(object):
     # props = get_config('config.txt')
     def __init__(self):
-        self.ip = ['127.0.0.1']
+        self.ip = ['10.140.0.16','10.140.0.17','10.140.0.18']
         self.port = '9042'
         self.keyspace = 'iotinfo_tmp'
         self.cluster = Cluster(contact_points=self.ip, port=self.port)
@@ -129,7 +130,11 @@ if __name__ == "__main__":
         exit(-1)
 
     cassandraUtil = cassandraUtil()
-    sc = SparkContext('local[*]', 'spark2cassandra')
+    conf = SparkConf()\
+            .setAppName('spark2cassandra')\
+            .set('spark.mesos.executor.docker.image','adolphlwq/mesos-for-spark-exector-image:1.6.0')\
+            .set('spark.mesos.executor.home','/usr/local/spark-1.6.0-bin-hadoop2.6')
+    sc = SparkContext(conf = conf)
     ssc = StreamingContext(sc, 5)
 
     zkQuorum, topic = sys.argv[1:]
