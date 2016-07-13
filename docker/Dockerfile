@@ -1,6 +1,7 @@
 # refer 'http://spark.apache.org/docs/latest/running-on-mesos.html#spark-properties' on 'spark.mesos.executor.docker.image' section
 FROM ubuntu:14.04
 
+USER linker
 WORKDIR /linker
 RUN ln -f -s /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 
