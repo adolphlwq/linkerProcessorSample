@@ -15,6 +15,13 @@
     /publicdata/workspace/PycharmProjects/spark2cassandra/spark2cassandra.py \
     localhost:2181 topic-spark2cassandra
 
+    ### submit to mesos cluster using spark submit script
+    SPARK_HOME/bin/spark-submit \
+    --master mesos://host:port \
+    --packages org.apache.spark:spark-streaming-kafka_2.10:SPARK_VERSION(like 1.6.0) \
+    --executor-memory 3g
+    spark2cassandra.py zk topic
+
     ### submit on docs by dcos-spark cli
     dcos spark run --submit-args='--packages org.apache.spark:spark-streaming-kafka_2.10:1.6.0 \
         spark2cassandra.py 10.140.0.14:2181 wlu_spark2cassandra' \
@@ -137,8 +144,9 @@ if __name__ == "__main__":
     cassandraUtil = cassandraUtil()
     conf = SparkConf()\
             .setAppName('spark2cassandra')\
-            .set('spark.mesos.executor.docker.image','adolphlwq/mesos-for-spark-exector-image:1.6.0')\
-            .set('spark.mesos.executor.home','/usr/local/spark-1.6.0-bin-hadoop2.6')
+            .set('spark.mesos.executor.docker.image','adolphlwq/mesos-for-spark-exector-image:1.6.0.beta2')\
+            .set('spark.mesos.executor.home','/usr/local/spark-1.6.0-bin-hadoop2.6')\
+	    .set('spark.mesos.coarse','true')
     sc = SparkContext(conf = conf)
     ssc = StreamingContext(sc, 5)
 
