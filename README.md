@@ -26,6 +26,7 @@ path/to/spark/bin/spark-submit \
 ```
 #### submit code to Spark on Mesos cluster
 >Note: this method using Spark [client mode](http://spark.apache.org/docs/latest/running-on-mesos.html#client-mode) in Mesos cluster.
+
 1. launch a Spark driver container in Mesos cluster
 The container should have:
 	- Spark.
@@ -65,6 +66,6 @@ the Maven central repo is https://mvnrepository.com/artifact/org.apache.spark/sp
 - [X] overall cpu usage from linkerConnector (via Kafka)
     - [X] calculate cpu usage and save to cassandra
 - [X] Mesos agent usage from linkerConnector (via Kafka)
-- [] build Mesos Spark executor docker image for testing code on Mesos cluster
+- [ ] build Mesos Spark executor docker image for testing code on Mesos cluster
 	- [X] [Mesos Spark executor beta2 Dockerfile](https://github.com/dockerq/docker-spark/blob/master/Dockerfile)
 - [ ] research Spark streaming's "window" and improve code
