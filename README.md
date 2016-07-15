@@ -16,24 +16,39 @@ Second:
     - cd path/to/linkerConnector
     - `go build` and `go install`
 3. git clone linkerProcessSample(https://github.com/adolphlwq/linkerProcessorSample.git)
-3. submit python code to spark(**local mode**):
+
+### submit code to Spark 
+#### submit python code to Spark with local mode
 ```
 path/to/spark/bin/spark-submit \
     --packages org.apache.spark:spark-streaming-kafka_2.10:1.6.1  \
     path/to/linkerProcessorSample/spark2cassandra.py kafka_broker_servers kafka_topic
 ```
+#### submit code to Spark on Mesos cluster
+>Note: this method using Spark [client mode](http://spark.apache.org/docs/latest/running-on-mesos.html#client-mode) in Mesos cluster.
+1. launch a Spark driver container in Mesos cluster
+The container should have:
+	- Spark.
+	- libmesos.so(download mesos) refer to [client mode](http://spark.apache.org/docs/latest/running-on-mesos.html#client-mode).
+	- your code and dependencies.
+2. submit code to Mesos cluster
+```language
+SPARK_HOME/bin/submit \
+--master mesos://host:port(10.140.0.14:5050) \
+--packages org.apache.spark:spark-streaming-kafka_2.10:1.6.0 \
+--executor-memory 2g --driver-memory 2g \
+spark2cassandra.py zk(10.140.0.14:2181) topic(wlu_spark2cassandra)
+```
+This method is client mode,in which Spark framework and Spark driver run on the same machine(the machine which we submit code).
 
 ## Note:
-1. interval of spark streaming **>** interval of linkerConnector
+1. suggest interval of Spark streaming **>** interval of linkerConnector
 
 ## Docker image
 1. This [image Dcokerfile](https://github.com/adolphlwq/linkerProcessorSample/blob/master/docker/Dockerfile) is for running Spark exector on Mesos cluster.
-2. If your code is written in Python and your Spark run on mesos, you must solve the java dependencies.
-3. I scan [Advanced Dependency Management](http://spark.apache.org/docs/latest/submitting-applications.html#advanced-dependency-management) section and try build the dependencies on mesos spark exector docker image.
-
-## Note:
-1. interval of spark streaming **>** interval of linkerConnectorhe Maven central repo is https://mvnrepository.com/artifact/org.apache.spark/spark-streaming-kafka_2.10/1.6.0
-
+2. If your code is written in Python and your Spark run on Mesos, you must solve the java dependencies.
+3. I scan [Advanced Dependency Management](http://spark.apache.org/docs/latest/submitting-applications.html#advanced-dependency-management) section and try build the dependencies on Mesos Spark exector docker image.
+the Maven central repo is https://mvnrepository.com/artifact/org.apache.spark/spark-streaming-kafka_2.10/1.6.0
 
 ## Reference
 - [calculate cpu usage in Golang](https://sourcegraph.com/github.com/statsd/system/-/def/GoPackage/github.com/statsd/system/pkg/cpu/-/totals)
@@ -49,6 +64,7 @@ path/to/spark/bin/spark-submit \
 - [X] save kafka message to cassandra directly
 - [X] overall cpu usage from linkerConnector (via Kafka)
     - [X] calculate cpu usage and save to cassandra
-- [ ] research spark streaming's "window" and improve code
-- [ ] mesos agent usage from linkerConnector (via Kafka)
-- [] build spark docker image for testing code on [Spark on Mesos mode](http://spark.apache.org/docs/latest/running-on-mesos.html) using [linkerDCOS](http://linkernetworks.com/) or [DC/OS](https://dcos.io/)
+- [X] Mesos agent usage from linkerConnector (via Kafka)
+- [] build Mesos Spark executor docker image for testing code on Mesos cluster
+	- [X] [Mesos Spark executor beta2 Dockerfile](https://github.com/dockerq/docker-spark/blob/master/Dockerfile)
+- [ ] research Spark streaming's "window" and improve code

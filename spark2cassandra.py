@@ -11,19 +11,22 @@
     linkerConnector -i 5000 -d kafka -t topic-spark2cassandra -s localhost:9092
 
     ### submit py files
-    ./bin/spark-submit --packages org.apache.spark:spark-streaming-kafka_2.10:1.6.1  \
-    /publicdata/workspace/PycharmProjects/spark2cassandra/spark2cassandra.py \
-    localhost:2181 topic-spark2cassandra
+    ./bin/spark-submit \
+    --packages org.apache.spark:spark-streaming-kafka_2.10:SPARK_VERSION(like 1.6.0) \
+    --executor-memory 2g \
+    --driver-memory 2g \
+    path/to/spark2cassandra.py \
+    <zk endpoint> <kafka topic>
 
     ### submit to mesos cluster using spark submit script
     SPARK_HOME/bin/spark-submit \
     --master mesos://host:port \
     --packages org.apache.spark:spark-streaming-kafka_2.10:SPARK_VERSION(like 1.6.0) \
     --executor-memory 3g
-    spark2cassandra.py zk topic
+    spark2cassandra.py <zk endpoint> <kafka topic>
 
     ### submit on docs by dcos-spark cli
-    dcos spark run --submit-args='--packages org.apache.spark:spark-streaming-kafka_2.10:1.6.0 \
+    dcos spark run --submit-args='--packages org.apache.spark:spark-streaming-kafka_2.10:SPARK_VERSION(like 1.6.0) \
         spark2cassandra.py 10.140.0.14:2181 wlu_spark2cassandra' \
         --docker-image=adolphlwq/mesos-for-spark-exector-image:1.6.0.beta
 
@@ -92,6 +95,8 @@ class cassandraUtil(object):
             print('no data from spark streaming')
             return
         ret_data = cal_cpu_usage(data)
+        if ret_data is None or len(ret_data) == 0:
+            return
         q = self.session.prepare("INSERT INTO etldata(timestamp, cpu_all, cpus) values (?, ?, ?)")
         for ret in ret_data:
             self.session.execute(q, (ret['timestamp'], ret['cpu_all'], json.dumps(ret['cpus'])))
@@ -146,7 +151,7 @@ if __name__ == "__main__":
             .setAppName('spark2cassandra')\
             .set('spark.mesos.executor.docker.image','adolphlwq/mesos-for-spark-exector-image:1.6.0.beta2')\
             .set('spark.mesos.executor.home','/usr/local/spark-1.6.0-bin-hadoop2.6')\
-	    .set('spark.mesos.coarse','true')
+	        .set('spark.mesos.coarse','true')
     sc = SparkContext(conf = conf)
     ssc = StreamingContext(sc, 5)
 
