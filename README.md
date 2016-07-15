@@ -3,6 +3,13 @@
 
 A sample code for processing infomation from Kafka and store to Cassandra using Apache Spark
 
+## Tag introductions
+1. `tag v0.1` realizations:
+	2. collect info from kafka topic
+	3. calculate cpu total usage as well as each cpu usage
+	4. save cpu usage to cassandra
+	5. test successfully on Mesos cluster with [Spark client mode](http://spark.apache.org/docs/latest/running-on-mesos.html#client-mode)
+
 ## Usage
 ### Prerequisite
 First, you should set up zookeeper, cassandra and kafka broker. Then create kafka topic and cassandra keyspace
