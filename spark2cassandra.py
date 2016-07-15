@@ -39,34 +39,20 @@
 
 from __future__ import print_function
 import sys
-import logging
-import ConfigParser
 import json
 import time
+import uuid
 
 from pyspark import SparkContext
 from pyspark import SparkConf
 from pyspark.streaming import StreamingContext
 from pyspark.streaming.kafka import KafkaUtils
-
-# load config
-def get_config(filename):
-    with open(filename,'r') as f:
-        cfg = ConfigParser.ConfigParser()
-        cfg.readfp(f)
-        secs = cfg.sections()
-        props = cfg.items(secs[0])
-    return dict(props)
-
-# props = get_config('config.txt')
-
 from cassandra.cluster import Cluster
 
 class cassandraUtil(object):
-    # props = get_config('config.txt')
-    def __init__(self):
-        self.ip = ['10.140.0.16','10.140.0.17','10.140.0.18']
-        self.port = '9042'
+    def __init__(self, ip_list=['localhost'], port='9042'):
+        self.ip = ip_list
+        self.port = port
         self.keyspace = 'iotinfo_tmp'
         self.cluster = Cluster(contact_points=self.ip, port=self.port)
         self.session = self.cluster.connect(self.keyspace)
@@ -91,78 +77,74 @@ class cassandraUtil(object):
         :param data:list of cpu usage:[{},{},...,{}]
         :return:
         '''
-        if len(data) == 0:
+        if data is None or data == '':
             print('no data from spark streaming')
             return
         ret_data = cal_cpu_usage(data)
-        if ret_data is None or len(ret_data) == 0:
+        if ret_data is None or ret_data == '':
             return
-        q = self.session.prepare("INSERT INTO etldata(timestamp, cpu_all, cpus) values (?, ?, ?)")
+        q = self.session.prepare("INSERT INTO cpu_usage(uuid, cpu_usage, machine_id, ts) values (?, ?, ?, ?)")
         for ret in ret_data:
-            self.session.execute(q, (ret['timestamp'], ret['cpu_all'], json.dumps(ret['cpus'])))
-            print('insert info {0}'.format(ret))
+            self.session.execute(q, (uuid.uuid1(), ret['cpu_usage'], ret['machine_id'], ret['ts']))
 
-def cal_cpu_usage(l):
-    '''
-    :param l: [{'timestamp':timestamp, 'cpus':[{idle, total, id},...]},{},...,{}], 'cpu_all':{idle, total}},...,{}]
+def cal_cpu_usage(data):
+    """
+    :param: [data1,data2,...,datan]
+            datan = {'machine_id':machine_id, 'cpus':{'idle':cpus['idle'],'tot':tot},'ts':ts}
     :return:
-    '''
-    if len(l) < 2:
+    """
+    if len(data) < 2:
         return
-    usage = []
-    core_nums = len(l[0]['cpus'])
-    for i in range(len(l)-1):
-        each_ret = []
-        c0 = l[i]['cpus']
-        c1 = l[i+1]['cpus']
-        cpu_all_usage = (l[i+1]['cpu_all']['idle']-l[i]['cpu_all']['idle'])/float(l[i+1]['cpu_all']['total']-l[i]['cpu_all']['total'])*100
-        for j in range(core_nums):
-            ret = (c1[j]['idle']-c0[j]['idle'])/float(c1[j]['total']-c0[j]['total'])*100
-            each_ret.append({'id':c0[j]['id'], 'usage':ret})
-        usage.append({'timestamp':l[i]['timestamp'], 'cpu_all':cpu_all_usage, 'cpus':each_ret})
-    return usage
-
-def format_cpu_stat(p):
-    if p is None or p == '':
-        return
-    #calc tot cpu usage
-    cpu_all = p['stat']['cpu_all']
-    tot_idle = cpu_all['idle'] + cpu_all['iowait']
-    del cpu_all['id']
-    tot_tot = sum(cpu_all.values())
+    l = len(data)
     ret = []
-    cpus = p['stat']['cpus']
-    core_nums = len(cpus)
-    # calc each cpu's idle and total
-    for cpu in cpus:
-        id = cpu['id']
-        del cpu['id']
-        tmp = {'id': id, 'idle': cpu['idle'] + cpu['iowait'], 'total': sum(cpu.values())}
+    for i in range(l-1):
+        cpu0,cpu1 = data[i],data[i+1]
+        percent = (cpu1['cpus']['idle']-cpu0['cpus']['idle'])/float(cpu1['cpus']['tot']-cpu0['cpus']['tot']) * 100
+        tmp = {'machine_id':cpu0['machine_id'], 'cpu_usage':percent,'ts':cpu0['ts']}
         ret.append(tmp)
-    return {'timestamp':p['timestamp'], 'cpu_all':{'idle':tot_idle, 'total': tot_tot}, 'cpus':ret}
+    return ret
+
+def format_cpu_stat(info):
+    if info is None or info == '':
+        return
+    cpus = info['stat']['cpu_all']
+    machine_id = info['machine_id']
+    ts = info['timestamp']
+    cpus_ = cpus
+    del cpus_['id']
+    tot = sum(cpus.values())
+    ret = {'machine_id':machine_id, 'cpus':\
+            {'idle':cpus['idle'],'tot':tot},\
+            'ts':ts}
+    return ret
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
-        print("Usage: spark2cassandra.py <zk> <topic>", file=sys.stderr)
+        print("Usage: spark2cassandra.py <cassandra_ip> <cassandra_port> <zk> <topic>", file=sys.stderr)
         exit(-1)
-
+    zkQuorum, topic = sys.argv[1:]
     cassandraUtil = cassandraUtil()
-    conf = SparkConf()\
-            .setAppName('spark2cassandra')\
-            .set('spark.mesos.executor.docker.image','adolphlwq/mesos-for-spark-exector-image:1.6.0.beta2')\
-            .set('spark.mesos.executor.home','/usr/local/spark-1.6.0-bin-hadoop2.6')\
-	        .set('spark.mesos.coarse','true')
+
+    conf = SparkConf()
+    # conf for Spark standalone mode
+    conf.setAppName('spark2cassandra')
+    # conf for Mesos cluster
+    '''
+    conf.setAppName('spark2cassandra')\
+        .set('spark.mesos.executor.docker.image','adolphlwq/mesos-for-spark-exector-image:1.6.0.beta2')\
+        .set('spark.mesos.executor.home','/usr/local/spark-1.6.0-bin-hadoop2.6')\
+	    .set('spark.mesos.coarse','true')
+	'''
+
     sc = SparkContext(conf = conf)
     ssc = StreamingContext(sc, 5)
-
-    zkQuorum, topic = sys.argv[1:]
     kafkaStream = KafkaUtils.createStream(ssc, zkQuorum, 'group-spark2cassandra', {topic: 1})
-    machineStream = kafkaStream.filter(lambda line: 'MachineInfo' in line).map(lambda line: line[1])
+    # machineStream = kafkaStream.filter(lambda line: 'MachineInfo' in line).map(lambda line: line[1])
     # compute cpu overall usage
     processStream = kafkaStream.filter(lambda line: 'ProcessInfo' in line).map(lambda line: line[1])
     formatUsageStream = processStream\
                     .map(lambda info: format_cpu_stat(json.loads(info.decode('utf-8'))))
-    # formatUsageStream.pprint()
+    formatUsageStream.pprint()
     formatUsageStream.foreachRDD(lambda t, rdd: cassandraUtil.save_cpu_usage(rdd.collect()))
     ssc.start()
     ssc.awaitTermination()
