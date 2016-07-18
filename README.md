@@ -77,6 +77,7 @@ the Maven central repo is https://mvnrepository.com/artifact/org.apache.spark/sp
 - [X] save kafka message to cassandra directly
 - [X] overall cpu usage from linkerConnector (via Kafka)
     - [X] calculate cpu usage and save to cassandra
+    - [X] calculate cpu usage from multi machine
 - [X] Mesos agent usage from linkerConnector (via Kafka)
 - [ ] build Mesos Spark executor docker image for testing code on Mesos cluster
 	- [X] [Mesos Spark executor beta2 Dockerfile](https://github.com/dockerq/docker-spark/blob/master/Dockerfile)

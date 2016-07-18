@@ -74,37 +74,81 @@ class cassandraUtil(object):
             self.session.execute(q, (int(now), info))
     def save_cpu_usage(self, data):
         '''
-        :param data:list of cpu usage:[{},{},...,{}]
+        :param data:list of cpu usage:[(K1,[Vi...]),(K2,[Vi...]),...,(Kn,[Vi...])]
         :return:
         '''
+        if len(data) < 1:
+            return
+        q = self.session.prepare("INSERT INTO cpu_usage(uuid, cpu_usage, machine_id, ts) values (?, ?, ?, ?)")
+        for ele in data:
+            v = ele[1]
+            if v is None or v == '':
+                return
+            for ret in v:
+                self.session.execute(q, (uuid.uuid1(), ret['cpu_usage'], ret['machine_id'], ret['ts']))
+        '''
+        print(data)
         if data is None or data == '':
             print('no data from spark streaming')
             return
         ret_data = cal_cpu_usage(data)
+        print (ret_data)
         if ret_data is None or ret_data == '':
             return
         q = self.session.prepare("INSERT INTO cpu_usage(uuid, cpu_usage, machine_id, ts) values (?, ?, ?, ?)")
         for ret in ret_data:
             self.session.execute(q, (uuid.uuid1(), ret['cpu_usage'], ret['machine_id'], ret['ts']))
+        '''
 
-def cal_cpu_usage(data):
+def cal_cpu_usage(tmp):
     """
-    :param: [data1,data2,...,datan]
-            datan = {'machine_id':machine_id, 'cpus':{'idle':cpus['idle'],'tot':tot},'ts':ts}
-    :return:
-    """
-    if len(data) < 2:
+        :param: [data1,data2,...,datan]
+                datan = {'machine_id':machine_id, 'cpus':{'idle':cpus['idle'],'tot':tot},'ts':ts}
+        :return:[ret1,ret2,...,retn]
+                ret = {machine_id, cpus,ts}
+        """
+    data_ = list(tmp)
+    if len(data_) < 2:
         return
+    data = sorted(data_, key=lambda x:x['ts'])
     l = len(data)
     ret = []
-    for i in range(l-1):
-        cpu0,cpu1 = data[i],data[i+1]
-        percent = (cpu1['cpus']['idle']-cpu0['cpus']['idle'])/float(cpu1['cpus']['tot']-cpu0['cpus']['tot']) * 100
-        tmp = {'machine_id':cpu0['machine_id'], 'cpu_usage':percent,'ts':cpu0['ts']}
+    for i in range(l - 1):
+        cpu0, cpu1 = data[i], data[i + 1]
+        percent = (cpu1['cpus']['idle'] - cpu0['cpus']['idle']) / float(cpu1['cpus']['tot'] - cpu0['cpus']['tot']) * 100
+        tmp = {'machine_id': cpu0['machine_id'], 'cpu_usage': percent, 'ts': cpu0['ts']}
         ret.append(tmp)
     return ret
 
+def tmp_cal(data):
+    """
+    :param: data:list of cpu usage:[(K1,[Vi...]),(K2,[Vi...]),...,(Kn,[Vi...])]
+            Vi = {'machine_id':machine_id, 'cpus':{'idle':cpus['idle'],'tot':tot},'ts':ts}
+    :return:
+    """
+    if len(data) == 0:
+        return
+    ret = []
+    for v in data:
+        l = len(data[1])
+        if l < 2:
+            return
+        for i in range(l-1):
+            cpu0,cpu1 = v[i],v[i+1]
+            print(cpu0)
+            percent = (cpu1['cpus']['idle'] - cpu0['cpus']['idle']) / float(
+                cpu1['cpus']['tot'] - cpu0['cpus']['tot']) * 100
+            tmp = {'machine_id': cpu0['machine_id'], 'cpu_usage': percent, 'ts': cpu0['ts']}
+            ret.append(tmp)
+    # return ret
+
 def format_cpu_stat(info):
+    """
+    :param info:original data source
+    :return:new:python tuple (machine_id, dict)
+            old:python dict
+            dict={'machine_id':v,'cpus':v,'tot':v,'ts':v}
+    """
     if info is None or info == '':
         return
     cpus = info['stat']['cpu_all']
@@ -116,7 +160,7 @@ def format_cpu_stat(info):
     ret = {'machine_id':machine_id, 'cpus':\
             {'idle':cpus['idle'],'tot':tot},\
             'ts':ts}
-    return ret
+    return (machine_id,ret)
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
@@ -144,8 +188,8 @@ if __name__ == "__main__":
     processStream = kafkaStream.filter(lambda line: 'ProcessInfo' in line).map(lambda line: line[1])
     formatUsageStream = processStream\
                     .map(lambda info: format_cpu_stat(json.loads(info.decode('utf-8'))))
-    formatUsageStream.pprint()
-    formatUsageStream.foreachRDD(lambda t, rdd: cassandraUtil.save_cpu_usage(rdd.collect()))
+    keyValueCpuStream = formatUsageStream.groupByKey().mapValues(cal_cpu_usage)
+    keyValueCpuStream.foreachRDD(lambda t, rdd: cassandraUtil.save_cpu_usage(rdd.collect()))
     ssc.start()
     ssc.awaitTermination()
     cassandraUtil.close_session()
