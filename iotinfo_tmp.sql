@@ -36,10 +36,11 @@ CREATE TABLE iotinfo_tmp.machineinfo (
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE iotinfo_tmp.etldata (
-    timestamp int PRIMARY KEY,
-    cpu_all float,
-    cpus text
+CREATE TABLE iotinfo_tmp.cpu_usage (
+    uuid timeuuid PRIMARY KEY,
+    cpu_usage float,
+    machine_id text,
+    ts timestamp
 ) WITH bloom_filter_fp_chance = 0.01
     AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
     AND comment = ''
