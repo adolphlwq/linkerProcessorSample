@@ -42,7 +42,7 @@ The json for Marathon to launch a Spark driver is:
     "type": "DOCKER",
     "volumes": [],
     "docker": {
-      "image": "adolphlwq/mesos-for-spark-driver:1.6.0",
+      "image": "adolphlwq/docker-spark:spark-driver-1.6.0",
       "network": "HOST",
       "privileged": false,
       "parameters": [],
