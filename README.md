@@ -15,6 +15,11 @@ realizations:
 1. the same as v0.1
 2. calculate cpu_all usage
 
+###tag v0.3
+1. the same as v0.1
+2. realize calculating muli-machine cpu usage
+3. build spark [driver image](https://hub.docker.com/r/adolphlwq/docker-spark/) and [executor image](https://hub.docker.com/r/adolphlwq/mesos-for-spark-exector-image/) for Mesos Cluster
+
 ## Usage
 ### Prerequisite
 First, you should set up zookeeper, cassandra and kafka broker. Then create kafka topic and cassandra keyspace

@@ -35,12 +35,25 @@ The json for Marathon to launch a Spark driver is:
   "id": "/spark-driver",
   "cmd": null,
   "cpus": 1,
-  "mem": 4096,
+  "mem": 2048,
   "disk": 2048,
   "instances": 1,
+  "constraints": [
+    [
+      "hostname",
+      "LIKE",
+      "10.140.0.17"
+    ]
+  ],
   "container": {
     "type": "DOCKER",
-    "volumes": [],
+    "volumes": [
+      {
+        "containerPath": "/linker",
+        "hostPath": "/home/zhangjie0220/linkerProcess",
+        "mode": "RW"
+      }
+    ],
     "docker": {
       "image": "adolphlwq/docker-spark:spark-driver-1.6.0",
       "network": "HOST",
@@ -58,7 +71,7 @@ The json for Marathon to launch a Spark driver is:
   ]
 }
 ```
-You should change the cpus and memory but **should provide at least 2G memory for spark driver**.Otherwise the driver will shutdown because lacking memory.
+You should change the cpus and memory but **must provide at least 2G memory for spark driver**.Otherwise the driver will shutdown because lacking memory.
 2. submit code
 submit script is :
 ```language
@@ -68,6 +81,6 @@ SPARK_HOME/bin/spark-submit \
     --executor-memory 3g
     spark2cassandra.py <zk endpoint> <kafka topic>
 ```
-
+More submit arguments refer [Launching Applications with spark-submit](http://spark.apache.org/docs/latest/submitting-applications.html#launching-applications-with-spark-submit)
 ## Using DCOS cli
-It is now under try.
+It is now under trying that submit python code to Mesos Cluster.I suggest using Scala write your code if using DCOS cli.
