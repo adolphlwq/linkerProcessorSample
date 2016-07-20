@@ -179,7 +179,7 @@ if __name__ == "__main__":
                                             topic""", file=sys.stderr)
         exit(-1)
     host,port,ks,zkQuorum,topic = sys.argv[1:]
-    cassandraUtil = cassandraUtil(host=host, port=port, ks=ks)
+    cassandraUtil = cassandraUtil(host=host.split(','), port=port, ks=ks)
 
     conf = SparkConf()
     # conf for Spark standalone mode
