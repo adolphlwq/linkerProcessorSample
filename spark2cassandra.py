@@ -16,14 +16,15 @@
     --executor-memory 2g \
     --driver-memory 2g \
     path/to/spark2cassandra.py \
-    <zk endpoint> <kafka topic>
+    <cassandra_host> <cassandra_port> <cassandra_keyspace> <zk endpoint> <kafka topic>
 
     ### submit to mesos cluster using spark submit script
     SPARK_HOME/bin/spark-submit \
     --master mesos://host:port \
     --packages org.apache.spark:spark-streaming-kafka_2.10:SPARK_VERSION(like 1.6.0) \
     --executor-memory 3g
-    spark2cassandra.py <zk endpoint> <kafka topic>
+    spark2cassandra.py \
+    <cassandra_host> <cassandra_port> <cassandra_keyspace> <zk endpoint> <kafka topic>
 
     ### submit on docs by dcos-spark cli
     dcos spark run --submit-args='--packages org.apache.spark:spark-streaming-kafka_2.10:SPARK_VERSION(like 1.6.0) \
@@ -42,6 +43,7 @@ import sys
 import json
 import time
 import uuid
+import getopt
 
 from pyspark import SparkContext
 from pyspark import SparkConf
@@ -50,10 +52,10 @@ from pyspark.streaming.kafka import KafkaUtils
 from cassandra.cluster import Cluster
 
 class cassandraUtil(object):
-    def __init__(self, ip_list=['localhost'], port='9042'):
-        self.ip = ip_list
+    def __init__(self, host=['localhost'], port='9042', ks='dap'):
+        self.ip = host
         self.port = port
-        self.keyspace = 'iotinfo_tmp'
+        self.keyspace = ks
         self.cluster = Cluster(contact_points=self.ip, port=self.port)
         self.session = self.cluster.connect(self.keyspace)
     def close_session(self):
@@ -163,23 +165,30 @@ def format_cpu_stat(info):
     return (machine_id,ret)
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        print("Usage: spark2cassandra.py <cassandra_ip> <cassandra_port> <zk> <topic>", file=sys.stderr)
+    if len(sys.argv) != 6:
+        print("""Usage: spark2cassandra.py <cassandra_host>
+                                           <cassandra_port>
+                                           <cassandra_keyspace>
+                                           <zk>
+                                           <topic>.
+                 Example: path/to/spark2cassandra.py
+                                            192.168.10.11,192.168.10.12
+                                            9042
+                                            dap
+                                            localhost:2181
+                                            topic""", file=sys.stderr)
         exit(-1)
-    zkQuorum, topic = sys.argv[1:]
-    cassandraUtil = cassandraUtil()
+    host,port,ks,zkQuorum,topic = sys.argv[1:]
+    cassandraUtil = cassandraUtil(host=host, port=port, ks=ks)
 
     conf = SparkConf()
     # conf for Spark standalone mode
     conf.setAppName('spark2cassandra')
     # conf for Mesos cluster
-    '''
     conf.setAppName('spark2cassandra')\
         .set('spark.mesos.executor.docker.image','adolphlwq/mesos-for-spark-exector-image:1.6.0.beta2')\
         .set('spark.mesos.executor.home','/usr/local/spark-1.6.0-bin-hadoop2.6')\
 	    .set('spark.mesos.coarse','true')
-	'''
-
     sc = SparkContext(conf = conf)
     ssc = StreamingContext(sc, 5)
     kafkaStream = KafkaUtils.createStream(ssc, zkQuorum, 'group-spark2cassandra', {topic: 1})

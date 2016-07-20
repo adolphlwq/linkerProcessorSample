@@ -15,9 +15,14 @@ The script is below:
 ```shell
 path/to/spark/bin/spark-submit \
     --packages org.apache.spark:spark-streaming-kafka_2.10:SPARK_VERSION(like 1.6.0)  \
-    path/to/linkerProcessorSample/spark2cassandra.py <zk> <kafka_topic>
+    path/to/linkerProcessorSample/spark2cassandra.py \
+    <cassandra_host> <cassandra_port> <cassandra_keyspace> <zk endpoint> <kafka topic>
 ```
-Where `<zk>` is the url of zookeeper, like  `192.168.1.5:2181` or `192.168.1.6:2181,192.168.1.5:2181,192.168.1.7:2181` if have multi zookeeper.`kafka_topic` is the topic of kafka.
+	- `<cassandra_host>` is the host of cassandra url, like `192.168.1.2,192.168.1.3`.
+	- `<cassandra_port>` is port of cassandra ,default is `9042`.
+	- `<cassandra_keyspace>` is the keyspace of cassandra.
+	- `<zk>` is the url of zookeeper, like  `192.168.1.5:2181` or `192.168.1.6:2181,192.168.1.5:2181,192.168.1.7:2181` if have multi zookeeper.
+	- `kafka_topic` is the topic of kafka.
 3. The open your browser in [localhost:4040](http://localhost:4040) to see if Spark is running
 
 ## Run Spark on Mesos Cluster
@@ -27,6 +32,7 @@ Here I will not introduce how to set up a Mesos Cluster, you can refer this [Git
 
 ### Spark driver
 Spark on Mesos only `client mode` for python code.So we should run a Spark driver on the Mesos Cluster using Marathon and then use it to submit code to Mesos.
+
 1. run a spark driver docker image
  [Here](https://github.com/dockerq/docker-spark/tree/spark-driver) I maintain a Spark Docker image repo, **all python dependencies have been download in the image**. I will run and exec to it to submit my code. 
 The json for Marathon to launch a Spark driver is:
@@ -79,7 +85,8 @@ SPARK_HOME/bin/spark-submit \
     --master mesos://host:port \
     --packages org.apache.spark:spark-streaming-kafka_2.10:SPARK_VERSION(like 1.6.0) \
     --executor-memory 3g
-    spark2cassandra.py <zk endpoint> <kafka topic>
+    spark2cassandra.py \
+    <cassandra_host> <cassandra_port> <cassandra_keyspace> <zk endpoint> <kafka topic>
 ```
 More submit arguments refer [Launching Applications with spark-submit](http://spark.apache.org/docs/latest/submitting-applications.html#launching-applications-with-spark-submit)
 ## Using DCOS cli
