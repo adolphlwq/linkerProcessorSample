@@ -117,7 +117,10 @@ def cal_cpu_usage(tmp):
     ret = []
     for i in range(l - 1):
         cpu0, cpu1 = data[i], data[i + 1]
-        percent = (cpu1['cpus']['idle'] - cpu0['cpus']['idle']) / float(cpu1['cpus']['tot'] - cpu0['cpus']['tot']) * 100
+        if (cpu1['cpus']['tot'] - cpu0['cpus']['tot']) == 0:
+            continue
+        else:
+            percent = (cpu1['cpus']['idle'] - cpu0['cpus']['idle']) / float(cpu1['cpus']['tot'] - cpu0['cpus']['tot']) * 100
         tmp = {'machine_id': cpu0['machine_id'], 'cpu_usage': percent, 'ts': cpu0['ts']}
         ret.append(tmp)
     return ret
@@ -179,16 +182,17 @@ if __name__ == "__main__":
                                             topic""", file=sys.stderr)
         exit(-1)
     host,port,ks,zkQuorum,topic = sys.argv[1:]
-    cassandraUtil = cassandraUtil(host=host.split(','), port=port, ks=ks)
+    # cassandraUtil = cassandraUtil(host=host.split(','), port=port, ks=ks)
+    cassandraUtil = cassandraUtil(host=['localhost'], port=port, ks=ks)
 
     conf = SparkConf()
     # conf for Spark standalone mode
-    conf.setAppName('spark2cassandra')
+    conf.setAppName('spark2cassandra').setMaster("local[2]")
     # conf for Mesos cluster
-    conf.setAppName('spark2cassandra')\
-        .set('spark.mesos.executor.docker.image','adolphlwq/mesos-for-spark-exector-image:1.6.0.beta2')\
-        .set('spark.mesos.executor.home','/usr/local/spark-1.6.0-bin-hadoop2.6')\
-	    .set('spark.mesos.coarse','true')
+    # conf.setAppName('spark2cassandra')\
+    #     .set('spark.mesos.executor.docker.image','adolphlwq/mesos-for-spark-exector-image:1.6.0.beta2')\
+    #     .set('spark.mesos.executor.home','/usr/local/spark-1.6.0-bin-hadoop2.6')\
+	 #    .set('spark.mesos.coarse','true')
     sc = SparkContext(conf = conf)
     ssc = StreamingContext(sc, 5)
     kafkaStream = KafkaUtils.createStream(ssc, zkQuorum, 'group-spark2cassandra', {topic: 1})
