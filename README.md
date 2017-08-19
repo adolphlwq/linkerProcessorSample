@@ -4,18 +4,18 @@
 A sample code for processing infomation from Kafka and store to Cassandra using Apache Spark
 
 ## Tag introductions
-###tag v0.1
+### tag v0.1
 realizations:
 2. collect info from kafka topic
 3. calculate cpu total usage as well as each cpu usage
 4. save cpu usage to cassandra
 5. test successfully on Mesos cluster with [Spark client mode](http://spark.apache.org/docs/latest/running-on-mesos.html#client-mode)
 
-###tag v0.2
+### tag v0.2
 1. the same as v0.1
 2. calculate cpu_all usage
 
-###tag v0.3
+### tag v0.3
 1. the same as v0.1
 2. realize calculating muli-machine cpu usage
 3. build spark [driver image](https://hub.docker.com/r/adolphlwq/docker-spark/) and [executor image](https://hub.docker.com/r/adolphlwq/mesos-for-spark-exector-image/) for Mesos Cluster
